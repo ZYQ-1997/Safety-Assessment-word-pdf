@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF表格提取工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 12px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f2ff;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f2ff;
+            border-radius: 10px;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .result-info {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .error-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 10px;
+            color: #c33;
+            font-size: 14px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #efe;
+            border: 1px solid #cfc;
+            border-radius: 10px;
+            color: #3c3;
+            font-size: 14px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .tables-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tables-container.show {
+            display: block;
+        }
+
+        .tables-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .tables-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .table-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .table-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-checkbox {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .table-info {
+            flex: 1;
+        }
+
+        .table-name {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .table-meta {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .select-all-container {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .select-all-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .select-all-label {
+            color: #333;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .tables-count {
+            margin-left: auto;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 PDF表格提取工具</h1>
+        <p class="subtitle">支持提取 PDF / Word 中的表格，统一导出为 Word (.docx)</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">点击选择 PDF/Word 文件或拖拽到此处</div>
+            <div class="upload-hint">支持 .pdf、.docx，最大 500MB</div>
+            <input type="file" id="fileInput" accept=".pdf,.docx" />
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <div class="tables-container" id="tablesContainer">
+            <div class="tables-title">📋 识别到的表格列表（请选择要提取的表格）</div>
+            <div class="select-all-container">
+                <input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" checked>
+                <label for="selectAllCheckbox" class="select-all-label">全选</label>
+                <span class="tables-count" id="tablesCount">已选择 0 / 0</span>
+            </div>
+            <ul class="tables-list" id="tablesList"></ul>
+        </div>
+
+        <button class="btn btn-primary" id="extractBtn" disabled>提取选中的表格</button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">正在处理...</div>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <div class="result-title">✅ 提取完成</div>
+            <div class="result-info" id="resultInfo"></div>
+            <a href="#" class="download-btn" id="downloadBtn" download>下载结果</a>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+    </div>
+
+    <script>
+        // 同源部署用相对路径；本地用 file:// 打开时使用完整后端地址
+        const API_BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
+        
+        console.log('当前访问方式:', window.location.href);
+        console.log('API地址:', API_BASE_URL);
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const extractBtn = document.getElementById('extractBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultInfo = document.getElementById('resultInfo');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const tablesContainer = document.getElementById('tablesContainer');
+        const tablesListEl = document.getElementById('tablesList');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const tablesCount = document.getElementById('tablesCount');
+
+        let uploadedFilename = null;
+        let tablesList = [];
+        let selectedTableIds = new Set();
+
+        // 点击上传区域选择文件
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf') && !file.name.toLowerCase().endsWith('.docx')) {
+                showError('请选择 PDF 或 Word (.docx) 文件');
+                return;
+            }
+
+            fileName.textContent = file.name;
+            fileSize.textContent = `文件大小: ${formatFileSize(file.size)}`;
+            fileInfo.classList.add('show');
+            extractBtn.disabled = true;
+            hideMessages();
+            hideResult();
+            tablesContainer.classList.remove('show');
+            tablesList = [];
+            selectedTableIds.clear();
+
+            // 上传文件
+            uploadFile(file);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showProgress(10, '正在上传文件...');
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || '上传失败');
+                }
+
+                uploadedFilename = data.filename;
+                showProgress(30, '文件上传成功，正在识别表格...');
+                
+                // 获取表格列表
+                await loadTablesList();
+            } catch (error) {
+                showError(`上传失败: ${error.message}`);
+                extractBtn.disabled = true;
+                hideProgress();
+            }
+        }
+
+        // 加载表格列表
+        async function loadTablesList() {
+            if (!uploadedFilename) return;
+
+            try {
+                showProgress(40, '正在识别表格...');
+                const response = await fetch(`${API_BASE_URL}/tables`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: uploadedFilename
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || '获取表格列表失败');
+                }
+
+                tablesList = data.tables || [];
+                selectedTableIds = new Set(tablesList.map(t => t.id)); // 默认全选
+                renderTablesList();
+                tablesContainer.classList.add('show');
+                extractBtn.disabled = false; // 启用提取按钮
+                hideProgress();
+                showSuccess(`成功识别 ${tablesList.length} 个表格，请选择要提取的表格`);
+            } catch (error) {
+                showError(`获取表格列表失败: ${error.message}`);
+                hideProgress();
+                extractBtn.disabled = false; // 即使失败也启用按钮，让用户可以重试
+            }
+        }
+
+        // 渲染表格列表
+        function renderTablesList() {
+            tablesListEl.innerHTML = '';
+            
+            tablesList.forEach(table => {
+                const li = document.createElement('li');
+                li.className = 'table-item';
+                
+                const isSelected = selectedTableIds.has(table.id);
+                
+                li.innerHTML = `
+                    <input type="checkbox" class="table-checkbox" data-table-id="${table.id}" ${isSelected ? 'checked' : ''}>
+                    <div class="table-info">
+                        <div class="table-name">${escapeHtml(table.name)}</div>
+                        <div class="table-meta">第 ${table.page} 页，表格 ${table.table_num}</div>
+                    </div>
+                `;
+                
+                const checkbox = li.querySelector('.table-checkbox');
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedTableIds.add(table.id);
+                    } else {
+                        selectedTableIds.delete(table.id);
+                    }
+                    updateSelectAllState();
+                    updateTablesCount();
+                });
+                
+                // 确保提取按钮状态正确
+                updateTablesCount();
+                
+                tablesListEl.appendChild(li);
+            });
+            
+            updateSelectAllState();
+            updateTablesCount();
+        }
+
+        // 更新全选状态
+        function updateSelectAllState() {
+            selectAllCheckbox.checked = selectedTableIds.size === tablesList.length && tablesList.length > 0;
+        }
+
+        // 更新表格计数
+        function updateTablesCount() {
+            tablesCount.textContent = `已选择 ${selectedTableIds.size} / ${tablesList.length}`;
+            // 根据选择状态更新提取按钮
+            if (tablesList.length > 0) {
+                extractBtn.disabled = selectedTableIds.size === 0;
+            }
+        }
+
+        // 全选/取消全选
+        selectAllCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                tablesList.forEach(table => selectedTableIds.add(table.id));
+            } else {
+                selectedTableIds.clear();
+            }
+            
+            // 更新所有复选框状态
+            tablesListEl.querySelectorAll('.table-checkbox').forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+            
+            updateSelectAllState();
+            updateTablesCount();
+        });
+
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        extractBtn.addEventListener('click', async () => {
+            if (!uploadedFilename) {
+                showError('请先上传文件');
+                return;
+            }
+
+            if (selectedTableIds.size === 0) {
+                showError('请至少选择一个表格');
+                return;
+            }
+
+            extractBtn.disabled = true;
+            hideMessages();
+            hideResult();
+            showProgress(60, `正在提取 ${selectedTableIds.size} 个表格，请稍候...`);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/extract`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: uploadedFilename,
+                        selected_table_ids: Array.from(selectedTableIds)
+                    })
+                });
+
+                // 检查响应类型
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    // 响应是JSON格式
+                    data = await response.json();
+                } else {
+                    // 响应不是JSON格式（可能是HTML错误页面）
+                    const text = await response.text();
+                    console.error('服务器返回了非JSON响应:', text.substring(0, 200));
+                    throw new Error(`服务器返回了非JSON格式的响应 (${response.status}): ${text.substring(0, 100)}...`);
+                }
+
+                // 检查响应状态
+                if (!response.ok) {
+                    // 响应不OK，使用已解析的数据构建错误信息
+                    let errorMsg = data.error || '提取失败';
+                    if (data.error_type) {
+                        errorMsg += ` (错误类型: ${data.error_type})`;
+                    }
+                    if (data.error_details) {
+                        console.error('详细错误信息:', data.error_details);
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                // 响应成功
+                showProgress(100, '提取完成');
+                
+                setTimeout(() => {
+                    hideProgress();
+                    showResult(data);
+                    extractBtn.disabled = false;
+                    const successMsg = data.total_tables > 0 
+                        ? `成功提取 ${data.total_tables} 个表格`
+                        : '未找到表格';
+                    showSuccess(successMsg);
+                }, 500);
+
+            } catch (error) {
+                // 错误处理：直接使用错误消息
+                let errorMsg = error.message || '提取失败';
+                
+                // 如果是网络错误或其他错误，显示通用错误信息
+                if (!error.message || error.message === 'Failed to fetch') {
+                    errorMsg = '网络错误或服务器无响应，请检查后端服务器是否正常运行';
+                }
+                
+                console.error('提取表格错误:', error);
+                showError(errorMsg);
+                extractBtn.disabled = false;
+                hideProgress();
+            }
+        });
+
+        function showProgress(percent, text) {
+            progressContainer.classList.add('show');
+            progressFill.style.width = percent + '%';
+            progressText.textContent = text;
+        }
+
+        function hideProgress() {
+            progressContainer.classList.remove('show');
+            progressFill.style.width = '0%';
+        }
+
+        function showResult(data) {
+            let infoText = '';
+            if (data.total_tables !== undefined) {
+                infoText = `成功提取 ${data.total_tables} 个表格`;
+                if (data.total_pages) {
+                    infoText += `（从 ${data.total_pages} 页PDF中提取）`;
+                }
+                if (data.file_type === 'docx') {
+                    infoText += '，已生成 Word 文档';
+                }
+            } else if (data.found_sections !== undefined) {
+                infoText = `找到 ${data.found_sections}/${data.total_sections} 个章节`;
+            if (data.total_tables > 0) {
+                infoText += `，共 ${data.total_tables} 个表格`;
+            }
+            } else {
+                infoText = '提取完成';
+            }
+            
+            resultInfo.textContent = infoText;
+            downloadBtn.href = `${API_BASE_URL}/download/${data.output_filename}`;
+            downloadBtn.download = data.output_filename;
+            downloadBtn.textContent = (data.file_type === 'docx') ? '下载 Word 文件' : '下载 PDF 文件';
+            resultContainer.classList.add('show');
+        }
+
+        function hideResult() {
+            resultContainer.classList.remove('show');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        function hideMessages() {
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+        }
+    </script>
+</body>
+</html>

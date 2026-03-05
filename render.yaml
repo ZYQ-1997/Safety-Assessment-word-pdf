@@ -1,0 +1,14 @@
+# Render 一键部署配置
+# 文档：https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: pdf-table-extract
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: PYTHONUNBUFFERED
+        value: "1"
